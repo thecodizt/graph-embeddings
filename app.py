@@ -193,8 +193,8 @@ A platform for analyzing graphs using various embedding techniques.
 """)
     
     # Add documentation link
-    st.markdown("---")
-    st.markdown("[📚 View Documentation](http://localhost:8502)")
+    # st.markdown("---")
+    # st.markdown("[📚 View Documentation](http://localhost:8502)")
     
     # File uploader at the top of sidebar
     uploaded_file = st.file_uploader("Upload NetworkX JSON", type=['json'])
