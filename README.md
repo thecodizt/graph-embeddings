@@ -63,8 +63,8 @@ docker-compose up --build
 ```
 
 2. Access the applications:
-- Streamlit app: http://localhost:8501
-- Documentation: http://localhost:8000
+- Streamlit app: http://localhost:8505
+- Documentation: http://localhost:8506
 
 ### Modifying Port Mappings
 
@@ -72,8 +72,8 @@ To change the ports on your host machine/VPS:
 
 1. Open `docker-compose.yml`
 2. Modify the port mappings under each service:
-   - For Streamlit: Change `"8501:8501"` to `"YOUR_PORT:8501"`
-   - For Documentation: Change `"8000:8000"` to `"YOUR_PORT:8000"`
+   - For Streamlit: Change `"8505:8501"` to `"YOUR_PORT:8501"`
+   - For Documentation: Change `"8506:8000"` to `"YOUR_PORT:8000"`
 
 Example:
 ```yaml

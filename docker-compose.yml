@@ -20,7 +20,7 @@ services:
   # Documentation service using MkDocs
   docs:
     build: .
-    command: mkdocs serve
+    command: mkdocs serve -a 0.0.0.0:8000
     volumes:
       - .:/app
     # Port mapping for documentation server
