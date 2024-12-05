@@ -28,6 +28,6 @@ services:
     # Change the left number (8000) to modify the port on your host machine/VPS
     # Example: "9001:8000" would make the docs available on port 9001
     ports:
-      - "8006:8000"
+      - "8506:8000"
     environment:
       - PYTHONUNBUFFERED=1
