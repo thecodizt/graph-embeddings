@@ -1,0 +1,53 @@
+/* Table styling */
+.md-typeset table:not([class]) {
+    font-size: .9rem;
+    border-collapse: collapse;
+    margin: 1em 0;
+    width: 100%;
+}
+
+.md-typeset table:not([class]) th {
+    min-width: 10rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--md-primary-fg-color--light);
+    color: var(--md-primary-bg-color);
+    vertical-align: middle;
+}
+
+.md-typeset table:not([class]) td {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--md-typeset-table-color);
+    vertical-align: middle;
+}
+
+/* Equation styling */
+.arithmatex {
+    margin: 1em 0;
+}
+
+/* Code block styling */
+.highlight {
+    background-color: var(--md-code-bg-color);
+    border-radius: 0.2rem;
+    margin: 1em 0;
+    padding: 0.5em;
+}
+
+/* List styling */
+.md-typeset ol li,
+.md-typeset ul li {
+    margin-bottom: .5em;
+}
+
+/* Section spacing */
+.md-typeset h2 {
+    margin-top: 2em;
+}
+
+.md-typeset h3 {
+    margin-top: 1.5em;
+}
+
+.md-typeset h4 {
+    margin-top: 1em;
+}
