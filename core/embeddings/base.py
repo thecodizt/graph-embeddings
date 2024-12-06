@@ -43,6 +43,10 @@ class BaseEmbedding(ABC):
         """Update embeddings using graph structure."""
         pass
     
+    def get_embedding(self, node: int) -> np.ndarray:
+        """Get the embedding vector for a node."""
+        return self.embeddings[node]
+    
     @abstractmethod
     def compute_distance(self, node1: int, node2: int) -> float:
         """Compute distance between two nodes in the embedding space."""

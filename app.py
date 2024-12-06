@@ -9,7 +9,20 @@ from core.graph_utils import generate_graph, save_graph_json
 from core.embeddings.euclidean import EuclideanEmbedding
 from core.embeddings.hyperbolic import HyperbolicEmbedding
 from core.embeddings.spherical import SphericalEmbedding
-from core.algorithms.shortest_path import DijkstraTraditional, DijkstraEmbedding
+from core.algorithms.shortest_path import (
+    DijkstraTraditional, DijkstraEmbedding,
+    BellmanFordTraditional, BellmanFordEmbedding,
+    FloydWarshallTraditional, FloydWarshallEmbedding,
+    AStarTraditional, AStarEmbedding
+)
+from core.algorithms.clustering import (
+    KMeansTraditional, KMeansEmbedding,
+    SpectralClusteringTraditional, SpectralClusteringEmbedding
+)
+from core.algorithms.ranking import (
+    PageRankTraditional, PageRankEmbedding,
+    HITSTraditional, HITSEmbedding
+)
 from core.algorithms.community_detection import LabelPropagationTraditional, LabelPropagationEmbedding
 from core.algorithms.node_ranking import PageRankTraditional, PageRankEmbedding
 
@@ -285,269 +298,244 @@ A platform for analyzing graphs using various embedding techniques.
 
 # Main area with tabs
 if st.session_state['graph'] is not None:
-    tab1, tab2, tab3 = st.tabs(["Graph Analysis", "Embeddings", "Algorithm Comparison"])
+    tab1, tab2, tab3 = st.tabs(["Graph Visualization", "Embeddings", "Algorithms"])
     
     with tab1:
-        # Graph visualization
-        st.header("Graph Visualization")
-        fig = create_plotly_graph(st.session_state['graph'], layout_type, 
-                                node_size_scale=node_size_scale, 
-                                edge_width=edge_width)
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Graph properties using the new function
-        st.header("Graph Properties")
-        properties = get_graph_properties(st.session_state['graph'])
-        
-        # Display properties in two columns
-        col1, col2 = st.columns(2)
-        props_per_column = len(properties) // 2 + len(properties) % 2
-        
-        with col1:
-            for key, value in list(properties.items())[:props_per_column]:
-                st.write(f"{key}: {value}")
-        
-        with col2:
-            for key, value in list(properties.items())[props_per_column:]:
-                st.write(f"{key}: {value}")
-        
-        # Download section
-        st.header("Download Graph")
-        if st.button("Download Graph (JSON)"):
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as tmp:
-                save_graph_json(st.session_state['graph'], tmp.name)
-                with open(tmp.name, 'r') as f:
-                    graph_json = f.read()
-                
-                st.download_button(
-                    label="Click to Download",
-                    data=graph_json,
-                    file_name="graph.json",
-                    mime="application/json"
-                )
+        if st.session_state['graph'] is not None:
+            fig = create_plotly_graph(st.session_state['graph'], layout_type)
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Please upload or generate a graph first.")
     
     with tab2:
-        st.header("Embedding Configuration")
-        
-        # Get suggested embedding type
-        suggested_type, suggestion_reason = suggest_embedding_type(st.session_state['graph'])
-        
-        # Convert suggested_type to lowercase for consistency
-        suggested_type = suggested_type.lower()
-        
-        # Display suggestion with explanation
-        st.info(f"Suggested embedding type: **{suggested_type.capitalize()}**\n\nReason: {suggestion_reason}")
-        
-        # Let user choose embedding type
-        embedding_type = st.selectbox(
-            "Select Embedding Type",
-            ["Euclidean", "Hyperbolic", "Spherical"],
-            index=["Euclidean", "Hyperbolic", "Spherical"].index(suggested_type.capitalize())
-        ).lower()
-        
-        # Embedding dimension
-        embedding_dim = st.slider("Embedding Dimension", min_value=2, max_value=10, value=2)
-        
-        # Create embeddings button
-        if st.button("Create Embeddings"):
-            # Create embedder based on type
-            if embedding_type == "euclidean":
-                embedder = EuclideanEmbedding(dim=embedding_dim)
-            elif embedding_type == "hyperbolic":
-                embedder = HyperbolicEmbedding(dim=embedding_dim)
-            else:  # spherical
-                embedder = SphericalEmbedding(dim=embedding_dim)
+        if st.session_state['graph'] is not None:
+            # Embedding configuration
+            st.header("Embedding Configuration")
             
-            # Train embeddings
-            embedder.train(st.session_state['graph'])
+            # Get embedding suggestion
+            suggested_embedding = suggest_embedding_type(st.session_state['graph'])
             
-            # Store embedder in session state
-            st.session_state['embedder'] = embedder
+            embedding_type = suggested_embedding[0] if suggested_embedding else None
+            embedding_description = suggested_embedding[1] if suggested_embedding else ""
             
-            st.success("Embeddings created successfully!")
-        
-        if 'embedder' in st.session_state:
-            try:
-                # Embedding visualization
-                st.header("Embedding Visualization")
-                
-                if embedding_dim == 2:
-                    # 2D visualization
-                    fig = create_plotly_graph(st.session_state['graph'], layout_type, 
-                                            node_size_scale=node_size_scale, 
-                                            edge_width=edge_width)
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                elif embedding_dim == 3:
-                    # 3D visualization
-                    # fig = create_embedding_plot_3d(st.session_state['graph'],
-                    #                             st.session_state['embedder'],
-                    #                             node_size_scale=node_size_scale,
-                    #                             edge_width=edge_width)
-                    # st.plotly_chart(fig, use_container_width=True)
-                    st.warning("3D visualization not implemented")
-                    
-                else:
-                    st.warning("Visualization only available for 2D and 3D embeddings")
-                    
-                # Embedding statistics
-                st.header("Embedding Statistics")
-                
-                # Calculate and display distortion
-                # distortion = calculate_distortion(st.session_state['graph'], 
-                #                                 st.session_state['embedder'])
-                # st.write(f"Average Distortion: {distortion:.4f}")
-                
-                # Calculate and display stress
-                # stress = calculate_stress(st.session_state['graph'],
-                #                         st.session_state['embedder'])
-                # st.write(f"Embedding Stress: {stress:.4f}")
-                
-            except Exception as e:
-                st.error(f"Error visualizing embeddings: {str(e)}")
-                if 'embedder' in st.session_state:
-                    del st.session_state['embedder']
-    
-    with tab3:
-        st.header("Algorithm Comparison")
-        
-        if 'graph' not in st.session_state:
-            st.warning("Please generate or upload a graph first")
-        else:
-            algorithm_type = st.selectbox(
-                "Select Algorithm",
-                ["Shortest Path", "Community Detection", "Node Ranking"]
+            selected_embedding = st.selectbox(
+                "Embedding Type",
+                ["euclidean", "hyperbolic", "spherical"],
+                index=0 if embedding_type is None else ["euclidean", "hyperbolic", "spherical"].index(embedding_type),
+                help=f"Suggested embedding type: {embedding_type}\n{embedding_description}"
             )
             
-            if algorithm_type == "Shortest Path":
-                # Source and target selection
-                source = st.selectbox("Select Source Node", 
-                                    options=list(st.session_state['graph'].nodes()),
-                                    key="sp_source")
-                target = st.selectbox("Select Target Node",
-                                    options=list(st.session_state['graph'].nodes()),
-                                    key="sp_target")
-                
-                if st.button("Run Shortest Path Comparison"):
-                    # Traditional algorithm
-                    trad_algo = DijkstraTraditional(st.session_state['graph'])
-                    trad_path, trad_dist = trad_algo.run(source, target)
-                    trad_time = trad_algo.execution_time
+            embedding_dim = st.slider("Embedding Dimension", min_value=2, max_value=128, value=64)
+            
+            if st.button("Generate Embeddings"):
+                with st.spinner("Generating embeddings..."):
+                    if selected_embedding == "euclidean":
+                        embedder = EuclideanEmbedding(dim=embedding_dim)
+                    elif selected_embedding == "hyperbolic":
+                        embedder = HyperbolicEmbedding(dim=embedding_dim)
+                    else:  # spherical
+                        embedder = SphericalEmbedding(dim=embedding_dim)
                     
-                    # Embedding-aware algorithm (if embeddings exist)
-                    if 'embedder' in st.session_state:
-                        emb_algo = DijkstraEmbedding(st.session_state['graph'], st.session_state['embedder'])
-                        emb_path, emb_dist = emb_algo.run(source, target)
-                        emb_time = emb_algo.execution_time
+                    # Train the embedder on the graph
+                    embedder.train(st.session_state['graph'])
+                    
+                    st.session_state['embedder'] = embedder
+                    st.success("Embeddings generated successfully!")
+        else:
+            st.info("Please upload or generate a graph first.")
+    
+    with tab3:
+        if st.session_state['graph'] is not None:
+            st.header("Graph Algorithms")
+            
+            # Algorithm selection
+            algo_type = st.selectbox(
+                "Algorithm Type",
+                ["Shortest Path", "Clustering", "Ranking"]
+            )
+            
+            if algo_type == "Shortest Path":
+                algo = st.selectbox(
+                    "Algorithm",
+                    ["Dijkstra", "Bellman-Ford", "Floyd-Warshall", "A*"]
+                )
+                
+                # Source and target node selection
+                nodes = list(st.session_state['graph'].nodes())
+                source_node = st.selectbox("Source Node", nodes, index=0)
+                target_node = st.selectbox("Target Node", nodes, index=min(1, len(nodes)-1))
+                
+                if st.button("Run Algorithm"):
+                    # Traditional version
+                    if algo == "Dijkstra":
+                        algorithm_class = DijkstraTraditional
+                    elif algo == "Bellman-Ford":
+                        algorithm_class = BellmanFordTraditional
+                    elif algo == "Floyd-Warshall":
+                        algorithm_class = FloydWarshallTraditional
+                    else:  # A*
+                        algorithm_class = AStarTraditional
+                    
+                    # Run traditional algorithm
+                    trad_algo = algorithm_class(st.session_state['graph'])
+                    trad_result = trad_algo.run(source_node, target_node)
+                    
+                    st.subheader("Traditional Algorithm Result")
+                    st.write(f"Execution time: {trad_algo.execution_time:.4f} seconds")
+                    st.write(f"Path: {trad_result['path']}")
+                    st.write(f"Path Length: {trad_result['distance']}")
+                    
+                    # Run embedding version if embedder exists
+                    if st.session_state['embedder']:
+                        if algo == "Dijkstra":
+                            algorithm_class = DijkstraEmbedding
+                        elif algo == "Bellman-Ford":
+                            algorithm_class = BellmanFordEmbedding
+                        elif algo == "Floyd-Warshall":
+                            algorithm_class = FloydWarshallEmbedding
+                        else:  # A*
+                            algorithm_class = AStarEmbedding
                         
-                        # Display results
+                        emb_algo = algorithm_class(st.session_state['graph'], st.session_state['embedder'])
+                        emb_result = emb_algo.run(source_node, target_node)
+                        
+                        st.subheader("Embedding-aware Algorithm Result")
+                        st.write(f"Execution time: {emb_algo.execution_time:.4f} seconds")
+                        st.write(f"Path: {emb_result['path']}")
+                        st.write(f"Path Length: {emb_result['distance']}")
+            
+            elif algo_type == "Clustering":
+                algo = st.selectbox(
+                    "Algorithm",
+                    ["K-Means", "Spectral Clustering"]
+                )
+                
+                k = st.slider("Number of Clusters", min_value=2, max_value=min(10, len(st.session_state['graph'])), value=3)
+                
+                if st.button("Run Algorithm"):
+                    if algo == "K-Means":
+                        trad_algo = KMeansTraditional(st.session_state['graph'])
+                        emb_algo = KMeansEmbedding(st.session_state['graph'], st.session_state['embedder']) if st.session_state['embedder'] else None
+                    else:  # Spectral
+                        trad_algo = SpectralClusteringTraditional(st.session_state['graph'])
+                        emb_algo = SpectralClusteringEmbedding(st.session_state['graph'], st.session_state['embedder']) if st.session_state['embedder'] else None
+                    
+                    # Run traditional version
+                    trad_clusters = trad_algo.run(k)
+                    st.write("Traditional Algorithm Result:")
+                    st.write("Clusters:", trad_clusters)
+                    
+                    # Run embedding version if embedder exists
+                    if st.session_state['embedder'] and emb_algo:
+                        emb_clusters = emb_algo.run(k)
+                        st.write("\nEmbedding-aware Algorithm Result:")
+                        st.write("Clusters:", emb_clusters)
+            
+            else:  # Ranking
+                algo = st.selectbox(
+                    "Algorithm",
+                    ["PageRank", "HITS"]
+                )
+                
+                if st.button("Run Algorithm"):
+                    if algo == "PageRank":
+                        trad_algo = PageRankTraditional(st.session_state['graph'])
+                        emb_algo = PageRankEmbedding(st.session_state['graph'], st.session_state['embedder']) if st.session_state['embedder'] else None
+                        
+                        # Run traditional version
+                        import time
+                        start_time = time.time()
+                        trad_scores = trad_algo.run()
+                        end_time = time.time()
+                        trad_algo.execution_time = end_time - start_time
+                        
+                        st.subheader("Traditional Algorithm Results")
+                        st.write(f"Execution time: {trad_algo.execution_time:.4f} seconds")
+                        
+                        # Create columns for traditional results
                         col1, col2 = st.columns(2)
                         with col1:
-                            st.subheader("Traditional Algorithm")
-                            st.write(f"Path: {' → '.join(map(str, trad_path))}")
-                            st.write(f"Distance: {trad_dist:.4f}")
-                            st.write(f"Time: {trad_time:.6f} seconds")
+                            st.write("Top 5 nodes by score:")
+                            top_nodes = sorted(trad_scores.items(), key=lambda x: x[1], reverse=True)[:5]
+                            for node, score in top_nodes:
+                                st.write(f"Node {node}: {score:.4f}")
                         
                         with col2:
-                            st.subheader("Embedding-Aware Algorithm")
-                            st.write(f"Path: {' → '.join(map(str, emb_path))}")
-                            st.write(f"Distance: {emb_dist:.4f}")
-                            st.write(f"Time: {emb_time:.6f} seconds")
+                            st.write("Score distribution:")
+                            fig = go.Figure(data=[go.Histogram(x=list(trad_scores.values()))])
+                            fig.update_layout(title="Score Distribution", xaxis_title="Score", yaxis_title="Count")
+                            st.plotly_chart(fig)
+                        
+                        # Run embedding version if embedder exists
+                        if st.session_state['embedder'] and emb_algo:
+                            start_time = time.time()
+                            emb_scores = emb_algo.run()
+                            end_time = time.time()
+                            emb_algo.execution_time = end_time - start_time
                             
-                        # Performance comparison
-                        st.subheader("Performance Comparison")
-                        speedup = trad_time / emb_time if emb_time > 0 else float('inf')
-                        st.write(f"Speedup: {speedup:.2f}x")
-                        
-                        # Path quality comparison
-                        if trad_dist > 0:
-                            quality_ratio = emb_dist / trad_dist
-                            st.write(f"Path Quality Ratio: {quality_ratio:.2f}x " +
-                                   "(1.0 means same quality, >1.0 means longer path)")
-                    else:
-                        st.error("Please create embeddings first")
-                        
-            elif algorithm_type == "Community Detection":
-                max_iterations = st.slider("Max Iterations", 5, 50, 10)
-                
-                if st.button("Run Community Detection Comparison"):
-                    # Traditional algorithm
-                    trad_algo = LabelPropagationTraditional(st.session_state['graph'])
-                    trad_communities = trad_algo.run(max_iterations)
-                    trad_time = trad_algo.execution_time
+                            st.subheader("Embedding-Aware Algorithm Results")
+                            st.write(f"Execution time: {emb_algo.execution_time:.4f} seconds")
+                            
+                            # Create columns for embedding-aware results
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.write("Top 5 nodes by score:")
+                                top_nodes = sorted(emb_scores.items(), key=lambda x: x[1], reverse=True)[:5]
+                                for node, score in top_nodes:
+                                    st.write(f"Node {node}: {score:.4f}")
+                            
+                            with col2:
+                                st.write("Score distribution:")
+                                fig = go.Figure(data=[go.Histogram(x=list(emb_scores.values()))])
+                                fig.update_layout(title="Score Distribution", xaxis_title="Score", yaxis_title="Count")
+                                st.plotly_chart(fig)
                     
-                    # Embedding-aware algorithm (if embeddings exist)
-                    if 'embedder' in st.session_state:
-                        emb_algo = LabelPropagationEmbedding(st.session_state['graph'], st.session_state['embedder'])
-                        emb_communities = emb_algo.run(max_iterations)
-                        emb_time = emb_algo.execution_time
+                    else:  # HITS
+                        trad_algo = HITSTraditional(st.session_state['graph'])
+                        emb_algo = HITSEmbedding(st.session_state['graph'], st.session_state['embedder']) if st.session_state['embedder'] else None
                         
-                        # Display results
+                        # Run traditional version
+                        trad_scores = trad_algo.run()
+                        
+                        st.subheader("Traditional Algorithm Results")
+                        st.write(f"Execution time: {trad_algo.execution_time:.4f} seconds")
+                        
+                        # Show hub and authority scores
                         col1, col2 = st.columns(2)
                         with col1:
-                            st.subheader("Traditional Algorithm")
-                            st.write(f"Number of Communities: {len(set(trad_communities.values()))}")
-                            st.write(f"Time: {trad_time:.6f} seconds")
+                            st.write("Top 5 nodes by hub score:")
+                            top_hubs = sorted(trad_scores['hub_scores'].items(), key=lambda x: x[1], reverse=True)[:5]
+                            for node, score in top_hubs:
+                                st.write(f"Node {node}: {score:.4f}")
                         
                         with col2:
-                            st.subheader("Embedding-Aware Algorithm")
-                            st.write(f"Number of Communities: {len(set(emb_communities.values()))}")
-                            st.write(f"Time: {emb_time:.6f} seconds")
+                            st.write("Top 5 nodes by authority score:")
+                            top_auths = sorted(trad_scores['authority_scores'].items(), key=lambda x: x[1], reverse=True)[:5]
+                            for node, score in top_auths:
+                                st.write(f"Node {node}: {score:.4f}")
                         
-                        # Performance comparison
-                        st.subheader("Performance Comparison")
-                        speedup = trad_time / emb_time if emb_time > 0 else float('inf')
-                        st.write(f"Speedup: {speedup:.2f}x")
-                    else:
-                        st.error("Please create embeddings first")
-                        
-            else:  # Node Ranking
-                if st.button("Run Node Ranking Comparison"):
-                    # Traditional algorithm
-                    trad_algo = PageRankTraditional(st.session_state['graph'])
-                    trad_ranks = trad_algo.run()
-                    trad_time = trad_algo.execution_time
-                    
-                    # Embedding-aware algorithm (if embeddings exist)
-                    if 'embedder' in st.session_state:
-                        emb_algo = PageRankEmbedding(st.session_state['graph'], st.session_state['embedder'])
-                        emb_ranks = emb_algo.run()
-                        emb_time = emb_algo.execution_time
-                        
-                        # Display results
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.subheader("Traditional Algorithm")
-                            st.write("Top 5 Nodes by PageRank:")
-                            top_trad = sorted(trad_ranks.items(), key=lambda x: x[1], reverse=True)[:5]
-                            for node, rank in top_trad:
-                                st.write(f"Node {node}: {rank:.4f}")
-                            st.write(f"Time: {trad_time:.6f} seconds")
-                        
-                        with col2:
-                            st.subheader("Embedding-Aware Algorithm")
-                            st.write("Top 5 Nodes by PageRank:")
-                            top_emb = sorted(emb_ranks.items(), key=lambda x: x[1], reverse=True)[:5]
-                            for node, rank in top_emb:
-                                st.write(f"Node {node}: {rank:.4f}")
-                            st.write(f"Time: {emb_time:.6f} seconds")
-                        
-                        # Performance comparison
-                        st.subheader("Performance Comparison")
-                        speedup = trad_time / emb_time if emb_time > 0 else float('inf')
-                        st.write(f"Speedup: {speedup:.2f}x")
-                        
-                        # Rank correlation
-                        trad_order = {node: i for i, (node, _) in enumerate(top_trad)}
-                        emb_order = {node: i for i, (node, _) in enumerate(top_emb)}
-                        common_nodes = set(trad_order.keys()) & set(emb_order.keys())
-                        if common_nodes:
-                            differences = sum(abs(trad_order[node] - emb_order[node])
-                                           for node in common_nodes)
-                            similarity = 1 - (differences / (len(common_nodes) * len(common_nodes)))
-                            st.write(f"Rank Similarity: {similarity:.2f} " +
-                                   "(1.0 means identical rankings)")
-                    else:
-                        st.error("Please create embeddings first")
+                        # Run embedding version if embedder exists
+                        if st.session_state['embedder'] and emb_algo:
+                            emb_scores = emb_algo.run()
+                            
+                            st.subheader("Embedding-Aware Algorithm Results")
+                            st.write(f"Execution time: {emb_algo.execution_time:.4f} seconds")
+                            
+                            # Show hub and authority scores
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.write("Top 5 nodes by hub score:")
+                                top_hubs = sorted(emb_scores['hub_scores'].items(), key=lambda x: x[1], reverse=True)[:5]
+                                for node, score in top_hubs:
+                                    st.write(f"Node {node}: {score:.4f}")
+                            
+                            with col2:
+                                st.write("Top 5 nodes by authority score:")
+                                top_auths = sorted(emb_scores['authority_scores'].items(), key=lambda x: x[1], reverse=True)[:5]
+                                for node, score in top_auths:
+                                    st.write(f"Node {node}: {score:.4f}")
+        
+        else:
+            st.info("Please upload or generate a graph first.")
 else:
     st.info("Please upload or generate a graph to begin")

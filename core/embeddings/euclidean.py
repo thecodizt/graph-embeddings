@@ -13,9 +13,16 @@ class EuclideanEmbedding(BaseEmbedding):
         
     def _initialize_embeddings(self, graph: nx.Graph) -> Dict[int, np.ndarray]:
         """Initialize node embeddings using spectral layout for better starting positions."""
-        # Use spectral layout for initial positions as it preserves graph structure better
-        pos = nx.spectral_layout(graph, dim=self.dim)
-        return {node: pos[node] for node in graph.nodes()}
+        try:
+            # Try spectral layout first
+            pos = nx.spectral_layout(graph, dim=min(self.dim, len(graph.nodes()) - 1))
+            if pos[list(graph.nodes())[0]].shape[0] < self.dim:
+                # Pad with zeros if needed
+                return {node: np.pad(pos[node], (0, self.dim - pos[node].shape[0])) for node in graph.nodes()}
+            return {node: pos[node] for node in graph.nodes()}
+        except:
+            # Fall back to random initialization if spectral layout fails
+            return {node: np.random.normal(0, 0.1, self.dim) for node in graph.nodes()}
     
     def _update_embeddings(self, graph: nx.Graph, iterations: int = 50):
         """Update embeddings using force-directed algorithm with graph structure."""
