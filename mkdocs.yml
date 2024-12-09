@@ -28,6 +28,22 @@ theme:
     text: Roboto
     code: Roboto Mono
 
+docs_dir: docs
+site_dir: site
+
+use_directory_urls: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yourusername/graph-embeddings
+
+static_templates:
+  - 404.html
+
+extra_files:
+  - benchmark_results/plots/
+
 extra_css:
   - stylesheets/extra.css
 
@@ -51,21 +67,18 @@ nav:
   - Guide:
     - Getting Started: guide/getting-started.md
     - Installation: guide/installation.md
-  - Theory:
-    - Embedding Types: theory/embeddings.md
-    - Algorithms: theory/algorithms.md
+    - Quick Tutorial: guide/tutorial.md
+  - Algorithms:
+    - Overview: algorithms/overview.md
+  - Benchmarks:
+    - Performance: benchmarks/performance.md
   - API Reference:
-    - Overview: api/reference.md
-    - Embeddings:
-      - Base: api/embeddings/base.md
-      - Euclidean: api/embeddings/euclidean.md
-      - Spherical: api/embeddings/spherical.md
-      - Hyperbolic: api/embeddings/hyperbolic.md
-    - Algorithms:
-      - Shortest Path: api/algorithms/shortest_path.md
-  - Examples:
-    - Basic Usage: examples/basic.md
-    - Advanced Usage: examples/advanced.md
+    - Core:
+      - Embedding Algorithms: reference/embedding_algorithms.md
+      - Traditional Algorithms: reference/traditional_algorithms.md
+    - Benchmarks:
+      - Suite: reference/benchmark_suite.md
+      - Visualization: reference/visualization.md
 
 markdown_extensions:
   - pymdownx.highlight:
