@@ -1,2 +1,41 @@
 venv/
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.dylib
+
+# Benchmark results and plots
+benchmark_results/plots/*.html
+test/results/visualizations/*.html
+
+# Large data files
+*.dat
+*.npz
+*.json
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Environment files
+.env
+.venv
+env/
+ENV/
+
+# Documentation site
+site/
